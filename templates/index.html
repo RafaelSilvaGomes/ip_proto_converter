@@ -313,6 +313,47 @@
         color: var(--neon-green);
         box-shadow: 0 0 10px var(--neon-green);
       }
+
+      /* --- Responsividade para Celulares (Mobile) --- */
+      @media screen and (max-width: 600px) {
+        /* Diminui o padding do painel para ganhar mais espaço útil */
+        .cyber-panel {
+          padding: 30px 15px;
+          width: 90%;
+        }
+
+        /* Reduz a fonte do título e tira o efeito 3D muito exagerado */
+        .glitch-title {
+          font-size: 18px;
+          letter-spacing: 1px;
+          transform: translateZ(10px);
+        }
+
+        /* Desativa completamente as camadas do efeito Glitch no mobile */
+        .glitch-title::before,
+        .glitch-title::after {
+          display: none;
+          animation: none;
+        }
+
+        /* Ajusta o tamanho da fonte do Input e do Resultado */
+        input {
+          font-size: 16px;
+          padding: 12px;
+        }
+
+        .bin-output {
+          font-size: 16px;
+          word-break: break-all; /* Força o binário a quebrar de linha se necessário */
+        }
+
+        /* Reduz o tamanho do botão */
+        .cyber-btn {
+          font-size: 14px;
+          padding: 12px 20px;
+          transform: translateZ(10px);
+        }
+      }
     </style>
   </head>
   <body>
