@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Protocolo de Conversão Binária v1.0</title>
+    <style>
+      /* --- CSS: Estilização Absurda e Temática --- */
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap");
+
+      :root {
+        --neon-green: #0f0;
+        --neon-blue: #0ff;
+        --neon-pink: #f0f;
+        --bg-dark: #050509;
+        --glass: rgba(10, 10, 25, 0.7);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        outline: none;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: var(--bg-dark);
+        font-family: "Share Tech Mono", monospace;
+        overflow: hidden;
+        color: #fff;
+        perspective: 1500px; /* Necessário para o efeito 3D do container */
+      }
+
+      /* Canvas para o fundo Matrix */
+      #matrix-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        opacity: 0.3; /* Sutil para não atrapalhar a leitura */
+      }
+
+      /* --- Container Principal com Tilt 3D --- */
+      .cyber-panel {
+        position: relative;
+        z-index: 1;
+        background: var(--glass);
+        backdrop-filter: blur(15px);
+        border: 2px solid var(--neon-blue);
+        padding: 50px 40px;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 650px; /* <--- Aumentado de 500px para 650px */
+        text-align: center;
+        transform-style: preserve-3d;
+        transition:
+          transform 0.1s ease-out,
+          box-shadow 0.3s ease;
+        box-shadow:
+          0 0 30px rgba(0, 255, 255, 0.2),
+          inset 0 0 15px rgba(0, 255, 255, 0.1);
+      }
+
+      .cyber-panel:hover {
+        box-shadow:
+          0 0 50px rgba(0, 255, 255, 0.4),
+          inset 0 0 20px rgba(0, 255, 255, 0.2);
+      }
+
+      /* Decoração de cantos Sci-Fi */
+      .cyber-panel::before,
+      .cyber-panel::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--neon-blue);
+      }
+      .cyber-panel::before {
+        top: -5px;
+        left: -5px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .cyber-panel::after {
+        bottom: -5px;
+        right: -5px;
+        border-left: none;
+        border-top: none;
+      }
+
+      /* --- Título com Efeito Glitch --- */
+      .glitch-title {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: 26px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #fff;
+        position: relative;
+        margin-bottom: 40px;
+        text-shadow: 0 0 10px var(--neon-blue);
+        transform: translateZ(50px); /* Salta para frente no 3D */
+      }
+
+      .glitch-title::before,
+      .glitch-title::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+      }
+
+      .glitch-title::before {
+        color: var(--neon-pink);
+        z-index: -1;
+        animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both
+          infinite;
+      }
+
+      .glitch-title::after {
+        color: var(--neon-green);
+        z-index: -2;
+        animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both
+          infinite;
+      }
+
+      @keyframes glitch {
+        0% {
+          transform: translate(0);
+        }
+        20% {
+          transform: translate(-3px, 3px);
+        }
+        40% {
+          transform: translate(-3px, -3px);
+        }
+        60% {
+          transform: translate(3px, 3px);
+        }
+        80% {
+          transform: translate(3px, -3px);
+        }
+        100% {
+          transform: translate(0);
+        }
+      }
+
+      /* --- Input com Linha de Escaneamento --- */
+      .input-wrapper {
+        position: relative;
+        margin-bottom: 30px;
+        transform: translateZ(30px);
+      }
+
+      input {
+        width: 100%;
+        padding: 18px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: var(--neon-blue);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 20px;
+        text-align: center;
+        border-radius: 5px;
+        transition: 0.3s;
+      }
+
+      input:focus {
+        border-color: var(--neon-pink);
+        box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        color: var(--neon-pink);
+      }
+
+      /* Linha de escaneamento que aparece no Focus */
+      .scanner-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--neon-pink);
+        box-shadow: 0 0 10px var(--neon-pink);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      input:focus + .scanner-line {
+        animation: scan 1.5s linear infinite;
+        opacity: 1;
+      }
+
+      @keyframes scan {
+        0% {
+          top: 0%;
+        }
+        100% {
+          top: 100%;
+        }
+      }
+
+      /* --- Botão Neon Pulsante --- */
+      .cyber-btn {
+        background: transparent;
+        border: 2px solid var(--neon-green);
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        transform: translateZ(40px);
+        letter-spacing: 1px;
+      }
+
+      .cyber-btn:hover {
+        background: var(--neon-green);
+        color: #000;
+        box-shadow: 0 0 30px var(--neon-green);
+      }
+
+      .cyber-btn:disabled {
+        border-color: #444;
+        color: #444;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      /* --- Área de Resultado --- */
+      #resultContainer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0, 255, 255, 0.1);
+        transform: translateZ(20px);
+        display: none; /* Escondido inicialmente */
+      }
+
+      #resultContainer.active {
+        display: block;
+      }
+
+      .bin-output {
+        font-size: 24px;
+        color: #fff;
+        text-shadow:
+          0 0 10px #fff,
+          0 0 20px var(--neon-blue);
+        margin-bottom: 20px;
+        word-wrap: break-word;
+        min-height: 1.2em; /* Mantém espaço para animação */
+      }
+
+      #errorText {
+        color: var(--neon-pink);
+        text-shadow: 0 0 10px var(--neon-pink);
+        margin-top: 20px;
+        font-size: 14px;
+        display: none;
+      }
+
+      #errorText.active {
+        display: block;
+        animation: flicker 0.1s infinite;
+      }
+
+      @keyframes flicker {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* Botão Copiar Secundário */
+      .copy-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #888;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 12px;
+        transition: 0.3s;
+        margin: 0 auto;
+      }
+
+      .copy-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-color: #fff;
+      }
+      .copy-btn.success {
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+        box-shadow: 0 0 10px var(--neon-green);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="matrix-bg"></canvas>
+
+    <div class="cyber-panel" id="tilt-panel">
+      <h1 class="glitch-title" data-text="IP_PROTO_CONVERTER">
+        IP_PROTO_CONVERTER
+      </h1>
+
+      <div class="input-wrapper">
+        <input
+          type="text"
+          id="entrada_ip"
+          placeholder="DIGITE O IPV4 (EX: 10.0.0.1)"
+          autocomplete="off"
+        />
+        <div class="scanner-line"></div>
+      </div>
+
+      <button
+        class="cyber-btn"
+        id="btn_converter"
+        onclick="solicitarConversao()"
+      >
+        EXECUTAR DECODIFICAÇÃO
+      </button>
+
+      <div id="errorText"></div>
+
+      <div id="resultContainer">
+        <div class="bin-output" id="texto_resultado"></div>
+        <button class="copy-btn" id="botao_copiar" onclick="copiarResultado()">
+          [ COPIAR_DADO ]
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // --- JS: Efeitos Visuais e Lógica de Interface ---
+
+      let resultadoFinalBinario = ""; // Guarda o valor limpo
+      const container = document.getElementById("tilt-panel");
+
+      // 1. Efeito Matrix Background (Canvas)
+      const canvas = document.getElementById("matrix-bg");
+      const ctx = canvas.getContext("2d");
+
+      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+
+      const characters = "01"; // Apenas binário para combinar
+      const fontSize = 14;
+      const columns = canvas.width / fontSize;
+      const drops = [];
+
+      for (let x = 0; x < columns; x++) drops[x] = 1;
+
+      function drawMatrix() {
+        ctx.fillStyle = "rgba(5, 5, 9, 0.05)"; // Rastro preto semi-transparente
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0f0"; // Cor do texto
+        ctx.font = fontSize + "px arial";
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = characters.charAt(
+            Math.floor(Math.random() * characters.length),
+          );
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
+            drops[i] = 0;
+          drops[i]++;
+        }
+      }
+      setInterval(drawMatrix, 35); // Velocidade da chuva
+
+      // 2. Efeito de Inclinação 3D (Tilt) no Container
+      document.addEventListener("mousemove", (e) => {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -10; // Inclinação vertical leve
+        const rotateY = ((x - centerX) / centerX) * 10; // Inclinação horizontal leve
+
+        container.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      });
+
+      // Reseta posição quando o mouse sai
+      container.addEventListener("mouseleave", () => {
+        container.style.transform = `rotateX(0deg) rotateY(0deg)`;
+        container.style.transition = `transform 0.5s ease`;
+        setTimeout(
+          () => (container.style.transition = `transform 0.1s ease-out`),
+          500,
+        );
+      });
+
+      // 3. Lógica de Comunicação com o Backend Flask
+      async function solicitarConversao() {
+        const entradaIp = document.getElementById("entrada_ip").value.trim();
+        const resultContainer = document.getElementById("resultContainer");
+        const errorText = document.getElementById("errorText");
+        const btnConverter = document.getElementById("btn_converter");
+
+        if (!entradaIp) return;
+
+        // Interface em modo "Processando"
+        btnConverter.disabled = true;
+        btnConverter.innerText = "DECODIFICANDO...";
+        errorText.classList.remove("active");
+        resultContainer.classList.remove("active");
+
+        try {
+          // Envia para o servidor Python
+          const response = await fetch("/api/converter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ip: entradaIp }),
+          });
+
+          const data = await response.json();
+
+          if (data.sucesso) {
+            // Python aceitou o IP
+            resultadoFinalBinario = data.resultado;
+            resultContainer.classList.add("active");
+            // Chama a animação hacker para revelar o texto
+            animarRevelacaoTexto(data.resultado);
+          } else {
+            // Python rejeitou o IP (erro de validação)
+            errorText.innerText = `> ${data.erro}`;
+            errorText.classList.add("active");
+          }
+        } catch (error) {
+          // Erro de rede
+          errorText.innerText = "> ERRO CRÍTICO: FALHA NA REDE DE DADOS.";
+          errorText.classList.add("active");
+        } finally {
+          // Restaura o botão
+          btnConverter.disabled = false;
+          btnConverter.innerText = "EXECUTAR DECODIFICAÇÃO";
+          resetarBotaoCopiar();
+        }
+      }
+
+      // 4. Animação "Hacker" de Revelação do Texto (Scramble)
+      function animarRevelacaoTexto(textoFinal) {
+        const outputDiv = document.getElementById("texto_resultado");
+        const chars = "01./"; // Caracteres para o embaralhamento
+        let frame = 0;
+        const blockAnimation = [];
+        const finalArray = textoFinal.split("");
+
+        // Preenche inicialmente com lixo
+        for (let i = 0; i < finalArray.length; i++) {
+          blockAnimation[i] = chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        outputDiv.innerText = blockAnimation.join("");
+
+        // Intervalo rápido para embaralhar e revelar da esquerda para a direita
+        const interval = setInterval(() => {
+          let completado = true;
+
+          for (let i = 0; i < finalArray.length; i++) {
+            // Se já revelou esse caractere, pula
+            if (blockAnimation[i] === finalArray[i]) continue;
+
+            completado = false;
+            // A cada frame, decide se revela o real ou embaralha mais
+            if (Math.random() < 0.1 || frame > 20) {
+              // frame > 20 garante que revele eventualmente
+              blockAnimation[i] = finalArray[i];
+            } else {
+              blockAnimation[i] =
+                chars[Math.floor(Math.random() * chars.length)];
+            }
+          }
+
+          outputDiv.innerText = blockAnimation.join("");
+          frame++;
+
+          if (completado) clearInterval(interval);
+        }, 40); // Velocidade da animação
+      }
+
+      // 5. Função Copiar (igual, mas com estilo novo)
+      function copiarResultado() {
+        if (resultadoFinalBinario) {
+          navigator.clipboard.writeText(resultadoFinalBinario).then(() => {
+            const btnCopiar = document.getElementById("botao_copiar");
+            btnCopiar.classList.add("success");
+            btnCopiar.innerText = "[ DADO_COPIADO ]";
+            setTimeout(resetarBotaoCopiar, 2000);
+          });
+        }
+      }
+
+      function resetarBotaoCopiar() {
+        const btnCopiar = document.getElementById("botao_copiar");
+        btnCopiar.classList.remove("success");
+        btnCopiar.innerText = "[ COPIAR_DADO ]";
+      }
+
+      // Enter no input
+      document
+        .getElementById("entrada_ip")
+        .addEventListener("keypress", (e) => {
+          if (e.key === "Enter") solicitarConversao();
+        });
+    </script>
+  </body>
+</html>
